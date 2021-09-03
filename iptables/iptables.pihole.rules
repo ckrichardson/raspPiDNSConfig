@@ -1,0 +1,92 @@
+*filter
+
+# Allows all loopback (lo0) traffic and drop all traffic to 127/8 that
+# doesn't use lo0
+-A INPUT -i lo -j ACCEPT
+-A INPUT ! -i lo -d 127.0.0.0/8 -j REJECT
+
+# Accepts all established inbound connections
+#-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+-A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# Allows all outbound traffic
+# You could modify this to only allow certain traffic
+
+# HTTP/HTTPS
+-A OUTPUT -p tcp --dport 80 -j ACCEPT
+-A OUTPUT -p tcp --dport 443 -j ACCEPT
+
+# SSH
+-A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+
+# Zeroconf
+-A OUTPUT -p udp -m state --state ESTABLISHED --sport 5353 -j ACCEPT
+
+# NTP
+-A OUTPUT -p udp --sport 123 -j ACCEPT
+
+# Pihole OUTPUT
+-A OUTPUT -s 192.168.0.0/16 -p tcp -m tcp --sport 80 -j ACCEPT
+-A OUTPUT -s 127.0.0.0/8 -p tcp -m tcp --sport 53 -j ACCEPT
+-A OUTPUT -s 127.0.0.0/8 -p udp -m udp --sport 53 -j ACCEPT
+-A OUTPUT -s 192.168.0.0/16 -p tcp -m tcp --sport 53 -j ACCEPT
+-A OUTPUT -s 192.168.0.0/16 -p tcp -m tcp --sport 53 -j ACCEPT
+-A OUTPUT -s 10.0.0.0/16 -p udp -m udp --sport 53 -j ACCEPT
+-A OUTPUT -s 10.0.0.0/16 -p udp -m udp --sport 53 -j ACCEPT
+-A OUTPUT -p udp --dport 67:68 --sport 67:68 -j ACCEPT
+-A OUTPUT -p tcp -m tcp --sport 4711 -j ACCEPT
+-A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+# Allows HTTP and HTTPS connections from anywhere (the normal ports
+# for websites)
+-A INPUT -p tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp --dport 443 -j ACCEPT
+
+# Allows SSH connections
+# The --dport number is the same as in /etc/ssh/sshd_config
+-A INPUT -p tcp -m state --state NEW --dport 22 -j ACCEPT
+
+
+
+# Limit SSH abuse
+# The first rule records the IP address of each new attempt to access
+# port 22 using the recent module. The second rule checks to see if that
+# IP address has attempted to connect 4 or more times within the last
+# 60 seconds, and if not then the packet is accepted.
+-A INPUT -p tcp -m state --state NEW -m recent --dport 22 --set --name ssh --rsource
+-A INPUT -p tcp -m state --state NEW -m recent --dport 22 ! --rcheck --seconds 60 --hitcount 4 --name ssh --rsource -j ACCEPT
+
+# Allow Zeroconf connections. (Bonjour and Avahi)
+-A INPUT -p udp -m state --state NEW --dport 5353 -j ACCEPT
+
+# Reject ping
+# note that blocking other types of icmp packets is considered a bad idea
+# by some
+#  remove -m icmp --icmp-type 8 from this line to allow all kinds of icmp:
+#  https://security.stackexchange.com/questions/22711
+-A INPUT -p icmp -m icmp --icmp-type echo-request -j REJECT
+
+# Allow NTP
+-A INPUT -p udp --dport 123 -j ACCEPT
+
+# Pihole INPUT
+-A INPUT -s 192.168.0.0/16 -p tcp -m tcp --dport 80 -j ACCEPT
+-A INPUT -s 127.0.0.0/8 -p tcp -m tcp --dport 53 -j ACCEPT
+-A INPUT -s 127.0.0.0/8 -p udp -m udp --dport 53 -j ACCEPT
+-A INPUT -s 192.168.0.0/16 -p tcp -m tcp --dport 53 -j ACCEPT
+-A INPUT -s 192.168.0.0/16 -p tcp -m tcp --dport 53 -j ACCEPT
+-A INPUT -s 10.0.0.0/16 -p udp -m udp --dport 53 -j ACCEPT
+-A INPUT -s 10.0.0.0/16 -p udp -m udp --dport 53 -j ACCEPT
+-A INPUT -p udp --dport 67:68 --sport 67:68 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 4711 -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+# log iptables denied calls (access via 'dmesg' command)
+-A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables denied: " --log-level 7
+
+# Reject all other inbound - default deny unless explicitly allowed policy:
+-A INPUT -j DROP
+-A OUTPUT -j DROP
+-A FORWARD -j DROP
+
+COMMIT
