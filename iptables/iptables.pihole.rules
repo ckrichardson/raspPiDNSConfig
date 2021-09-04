@@ -17,24 +17,23 @@
 -A OUTPUT -p tcp --dport 443 -j ACCEPT
 
 # SSH
--A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+-A OUTPUT -p tcp --dport 22 -j ACCEPT
 
 # Zeroconf
--A OUTPUT -p udp -m state --state ESTABLISHED --sport 5353 -j ACCEPT
+-A OUTPUT -p udp --dport 5353 -j ACCEPT
 
 # NTP
--A OUTPUT -p udp --sport 123 -j ACCEPT
+-A OUTPUT -p udp --dport 123 -j ACCEPT
 
 # Pihole OUTPUT
--A OUTPUT -s 192.168.0.0/16 -p tcp -m tcp --sport 80 -j ACCEPT
--A OUTPUT -s 127.0.0.0/8 -p tcp -m tcp --sport 53 -j ACCEPT
--A OUTPUT -s 127.0.0.0/8 -p udp -m udp --sport 53 -j ACCEPT
--A OUTPUT -s 192.168.0.0/16 -p tcp -m tcp --sport 53 -j ACCEPT
--A OUTPUT -s 192.168.0.0/16 -p tcp -m tcp --sport 53 -j ACCEPT
--A OUTPUT -s 10.0.0.0/16 -p udp -m udp --sport 53 -j ACCEPT
--A OUTPUT -s 10.0.0.0/16 -p udp -m udp --sport 53 -j ACCEPT
+-A OUTPUT -s 127.0.0.0/8 -p tcp -m tcp --dport 53 -j ACCEPT
+-A OUTPUT -s 127.0.0.0/8 -p udp -m udp --dport 53 -j ACCEPT
+-A OUTPUT -s 192.168.0.0/16 -p tcp -m tcp --dport 53 -j ACCEPT
+-A OUTPUT -s 192.168.0.0/16 -p tcp -m tcp --dport 53 -j ACCEPT
+-A OUTPUT -s 10.0.0.0/16 -p udp -m udp --dport 53 -j ACCEPT
+-A OUTPUT -s 10.0.0.0/16 -p udp -m udp --dport 53 -j ACCEPT
 -A OUTPUT -p udp --dport 67:68 --sport 67:68 -j ACCEPT
--A OUTPUT -p tcp -m tcp --sport 4711 -j ACCEPT
+-A OUTPUT -p tcp -m tcp --dport 4711 -j ACCEPT
 -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
 # Allows HTTP and HTTPS connections from anywhere (the normal ports
